@@ -1,0 +1,156 @@
+// Prisma schema para sistema de asistencia ChampionCoat
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  GERENTE
+  EMPLEADO
+}
+
+enum AttendanceStatus {
+  A_TIEMPO
+  RETARDO
+  FALTA
+  SALIDA_PENDIENTE
+  CHECKOUT_REALIZADO
+  FUERA_UBICACION
+  FACIAL_FALLIDO
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  role      Role     @default(EMPLEADO)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  employee  Employee?
+  auditLogs AuditLog[]
+}
+
+model Branch {
+  id               String   @id @default(cuid())
+  name             String
+  address          String?
+  latitude         Float
+  longitude        Float
+  radiusMeters     Float    @default(100)
+  scheduleStart    String   @default("08:00")
+  scheduleEnd      String   @default("17:00")
+  toleranceMinutes Int      @default(15)
+  active           Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  employees          Employee[]
+  attendanceRecords  AttendanceRecord[]
+  dailySales         DailySales[]
+  attendanceSettings AttendanceSettings?
+}
+
+model Employee {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  branchId    String
+  firstName   String
+  lastName    String
+  phone       String?
+  position    String?
+  scheduleIn  String   @default("08:00")
+  scheduleOut String   @default("17:00")
+  active      Boolean  @default(true)
+  consent     Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user              User               @relation(fields: [userId], references: [id])
+  branch            Branch             @relation(fields: [branchId], references: [id])
+  faceProfile       FaceProfile?
+  attendanceRecords AttendanceRecord[]
+  dailySales        DailySales[]
+}
+
+model FaceProfile {
+  id          String   @id @default(cuid())
+  employeeId  String   @unique
+  descriptors String   // JSON array of Float32Array embeddings (cifrado)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  employee Employee @relation(fields: [employeeId], references: [id])
+}
+
+model AttendanceRecord {
+  id            String           @id @default(cuid())
+  employeeId    String
+  branchId      String
+  date          String           // YYYY-MM-DD
+  checkInTime   DateTime?
+  checkOutTime  DateTime?
+  status        AttendanceStatus @default(SALIDA_PENDIENTE)
+  latitude      Float?
+  longitude     Float?
+  latOut        Float?
+  lonOut        Float?
+  faceVerified  Boolean          @default(false)
+  faceVerOut    Boolean          @default(false)
+  photoRef      String?
+  deviceInfo    String?
+  notes         String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  employee Employee @relation(fields: [employeeId], references: [id])
+  branch   Branch   @relation(fields: [branchId], references: [id])
+
+  @@unique([employeeId, date])
+}
+
+model DailySales {
+  id           String   @id @default(cuid())
+  branchId     String
+  employeeId   String
+  date         String   // YYYY-MM-DD
+  salesPOS     Float    @default(0)
+  salesNoIVA   Float    @default(0)
+  comments     String?
+  capturedAt   DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  branch   Branch   @relation(fields: [branchId], references: [id])
+  employee Employee @relation(fields: [employeeId], references: [id])
+
+  @@unique([branchId, date])
+}
+
+model AttendanceSettings {
+  id               String @id @default(cuid())
+  branchId         String @unique
+  toleranceMinutes Int    @default(15)
+  scheduleStart    String @default("08:00")
+  scheduleEnd      String @default("17:00")
+
+  branch Branch @relation(fields: [branchId], references: [id])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  entity    String
+  entityId  String?
+  details   String?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
