@@ -247,7 +247,7 @@ export default function CheckinPage() {
               <div className="w-48 h-48 border-4 border-red-400 rounded-full opacity-60 animate-pulse" />
             </div>
             <div className="absolute bottom-3 left-0 right-0 text-center">
-              <p className="text-white text-sm bg-black/50 inline-px-3 py-1 rounded-full">
+              <p className="text-white text-sm bg-black/50 inline-block px-3 py-1 rounded-full">
                 Mirando hacia la cámara...
               </p>
             </div>
