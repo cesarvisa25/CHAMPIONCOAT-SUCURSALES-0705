@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
   if (error) return error;
 
   const body = await req.json();
-  const { latitude, longitude, faceVerified, deviceInfo: _deviceInfo } = body;
+  const { latitude, longitude, faceVerified } = body;
 
   if (latitude === undefined || longitude === undefined) {
     return NextResponse.json({ error: "Geolocalización requerida" }, { status: 400 });

@@ -189,7 +189,7 @@ export default function ReportsPage() {
       {!loading && data.length === 0 && (
         <div className="bg-white rounded-xl shadow-sm p-12 text-center text-gray-400">
           <BarChart3 size={40} className="mx-auto mb-2 opacity-30" />
-          <p>Configura los filtros y presiona &quot;Generar&quot; para ver el reporte</p>
+          <p>{'Configura los filtros y presiona "Generar" para ver el reporte'}</p>
         </div>
       )}
     </div>

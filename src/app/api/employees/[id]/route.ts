@@ -3,15 +3,19 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth, logAction } from "@/lib/session";
 
 // PUT /api/employees/[id]
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   const { error, session } = await requireAuth(["ADMIN", "GERENTE"]);
   if (error) return error;
 
+  const { id } = await params;
   const body = await req.json();
   const { firstName, lastName, phone, position, branchId, scheduleIn, scheduleOut, active, consent } = body;
 
   const employee = await prisma.employee.update({
-    where: { id: params.id },
+    where: { id },
     data: {
       ...(firstName !== undefined && { firstName }),
       ...(lastName !== undefined && { lastName }),
@@ -32,19 +36,23 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 }
 
 // DELETE (desactivar) /api/employees/[id]
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   const { error, session } = await requireAuth(["ADMIN"]);
   if (error) return error;
 
+  const { id } = await params;
   const employee = await prisma.employee.update({
-    where: { id: params.id },
+    where: { id },
     data: { active: false },
   });
 
   await prisma.user.update({ where: { id: employee.userId }, data: { active: false } });
 
   const userId = (session!.user as any).id;
-  await logAction(userId, "DEACTIVATE", "Employee", params.id);
+  await logAction(userId, "DEACTIVATE", "Employee", id);
 
   return NextResponse.json({ ok: true });
 }
